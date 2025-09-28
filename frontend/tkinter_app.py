@@ -1707,22 +1707,11 @@ class ModernTkinterApp:
             try:
                 # First try to kill specific ADK processes
                 result1 = os.system('taskkill /f /im python.exe /fi "CommandLine like *adk_production*" 2>nul')
-                
                 # Then check for high-memory Python processes (likely ADK)
                 result2 = os.system('wmic process where "name=\'python.exe\' and WorkingSetSize>500000000" call terminate 2>nul')
-                
                 print("✅ Additional cleanup attempts completed")
-                
             except Exception as e:
                 print(f"⚠️ Error in cleanup: {e}")
-                # Final fallback - kill all Python processes
-                try:
-                    print("🚨 Using emergency fallback - killing all Python processes...")
-                    os.system('taskkill /f /im python.exe 2>nul')
-                    print("🚫 Emergency fallback completed")
-                except:
-                    pass
-            
             print("� Camera monitoring stopped - your camera is now OFF")
             
             # Update UI status if available
@@ -1736,11 +1725,8 @@ class ModernTkinterApp:
         except Exception as e:
             print(f"⚠️ Error stopping ADK production: {e}")
             # Emergency fallback - kill any remaining processes
-            try:
-                os.system('taskkill /f /im python.exe 2>nul')
-                print("� Emergency camera shutdown completed")
-            except:
-                pass
+            # Do not kill all python processes! Only log the error.
+            pass
     
     def pause_camera_monitoring(self):
         """Pause camera monitoring without closing the main app"""
@@ -1788,22 +1774,12 @@ class ModernTkinterApp:
             
             # Force kill ALL Python processes to guarantee camera shutdown
             print("🔴 Force stopping all Python processes for guaranteed camera shutdown...")
-            os.system('taskkill /f /im python.exe')
-                
-            print("📷 Camera is now OFF - all processes terminated")
-            
-            # Update UI
+            # Only stop the tracked ADK process and update UI
+            print("📷 Camera is now OFF - ADK process terminated")
             if hasattr(self, 'status_label'):
                 self.status_label.configure(text="📷 Camera OFF")
-                
         except Exception as e:
             print(f"⚠️ Error turning off camera: {e}")
-            # Fallback - more aggressive shutdown
-            try:
-                os.system('taskkill /f /im python.exe 2>nul')
-                print("� Camera force-stopped")
-            except:
-                pass
     
     def on_closing(self):
         """Handle application closing - ensures camera is turned off"""
@@ -1854,13 +1830,14 @@ class ModernTkinterApp:
         self.start_session()
     
     def start_session(self, setup_window=None):
-        """Start a monitoring session"""
+        print(f"[DEBUG] start_session called. session_running={self.session_running}, auto_refresh={self.auto_refresh}")
+        # Start a monitoring session
         if setup_window:
             setup_window.destroy()
-        
+
         # Start ADK production system
         self.start_adk_production()
-        
+
         self.session_running = True
         self.session_paused = False
         self.session_start_time = datetime.now()
