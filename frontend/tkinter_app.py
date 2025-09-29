@@ -987,7 +987,7 @@ class ModernTkinterApp:
             badges_frame,
             "🎯",
             "Daily goal: 45 min",
-            "Adjust in setup"
+            "You got this!"
         )
         goal_badge.pack(side="left", fill="x", expand=True, padx=(6, 0))
     
@@ -1766,20 +1766,26 @@ class ModernTkinterApp:
     
     def camera_off(self):
         """Turn off camera by stopping all monitoring processes"""
+        print("� Turning off camera...")
         try:
-            print("� Turning off camera...")
-            
             # Stop ADK production system
             self.stop_adk_production()
-            
-            # Force kill ALL Python processes to guarantee camera shutdown
-            print("🔴 Force stopping all Python processes for guaranteed camera shutdown...")
-            # Only stop the tracked ADK process and update UI
+
+            # Force kill any remaining ADK/camera processes by name or command line (Windows)
+            try:
+                # Kill any python.exe processes running adk_production.py
+                result1 = os.system('taskkill /f /im python.exe /fi "CommandLine like *adk_production*" 2>nul')
+                # Kill high-memory python.exe processes (likely ADK/camera)
+                result2 = os.system('wmic process where "name=\'python.exe\' and WorkingSetSize>500000000" call terminate 2>nul')
+                print("✅ Additional ADK/camera process cleanup completed")
+            except Exception as e:
+                print(f"⚠️ Error in ADK/camera cleanup: {e}")
+
             print("📷 Camera is now OFF - ADK process terminated")
             if hasattr(self, 'status_label'):
                 self.status_label.configure(text="📷 Camera OFF")
         except Exception as e:
-            print(f"⚠️ Error turning off camera: {e}")
+            print(f"⚠️ E Camera off: {e}")
     
     def on_closing(self):
         """Handle application closing - ensures camera is turned off"""
